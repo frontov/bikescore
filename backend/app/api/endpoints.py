@@ -15,6 +15,7 @@ class LeaderboardResponse(BaseModel):
 
 class RaceUploadResult(BaseModel):
     rider_id: str
+    rider_name: str
     time_sec: float
     status: str = "FIN"
 
@@ -106,7 +107,7 @@ def upload_race(race_data: RaceUploadRequest, db: Session = Depends(get_db)):
         # Check if rider exists, if not create
         rider = db.query(Rider).filter(Rider.id == res.rider_id).first()
         if not rider:
-            rider = Rider(id=res.rider_id, name=f"Rider {res.rider_id}") # Dummy name for now if not exists
+            rider = Rider(id=res.rider_id, name=res.rider_name)
             db.add(rider)
             db.flush()
 

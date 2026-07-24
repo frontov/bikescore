@@ -4,3 +4,5 @@ sqlalchemy
 pandas
 numpy
 pydantic
+beautifulsoup4
+requests
