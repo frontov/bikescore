@@ -69,7 +69,7 @@ def get_leaderboard(
                 "mtb": rider.rating_mtb if rider.races_mtb > 0 else None
             },
             "total_races": total_races,
-            "trend": 0.0 # Placeholder for trend as history requires storing snapshots
+            "trend": rider.last_trend
         })
 
     # Sort by rating descending

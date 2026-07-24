@@ -19,6 +19,8 @@ class Rider(Base):
     races_gravel = Column(Integer, default=0)
     races_mtb = Column(Integer, default=0)
 
+    last_trend = Column(Float, default=0.0)
+
     results = relationship("Result", back_populates="rider")
 
     @property

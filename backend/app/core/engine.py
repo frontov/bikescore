@@ -64,6 +64,7 @@ def process_race(session: Session, race_id: int):
     # Apply deltas and increment race counts
     for rider_id, delta in deltas.items():
         rider = rider_data[rider_id]['rider']
+        rider.last_trend = delta
         if category == 'road':
             rider.rating_road += delta
             rider.races_road += 1
