@@ -5,9 +5,10 @@ import RiderCard from './RiderCard';
 
 interface LeaderboardProps {
   selectedDisciplines: string[];
+  ageGroup: string;
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ selectedDisciplines }) => {
+const Leaderboard: React.FC<LeaderboardProps> = ({ selectedDisciplines, ageGroup }) => {
   const [riders, setRiders] = useState<LeaderboardRider[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ selectedDisciplines }) => {
       setLoading(true);
       try {
         const disciplinesStr = selectedDisciplines.length > 0 ? selectedDisciplines.join(',') : 'all';
-        const data = await fetchLeaderboard(disciplinesStr, search);
+        const data = await fetchLeaderboard(disciplinesStr, ageGroup, search);
         setRiders(data.leaderboard);
       } catch (error) {
         console.error("Error fetching leaderboard", error);
@@ -28,7 +29,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ selectedDisciplines }) => {
 
     const debounce = setTimeout(loadData, 300);
     return () => clearTimeout(debounce);
-  }, [selectedDisciplines, search]);
+  }, [selectedDisciplines, ageGroup, search]);
 
   const renderTrend = (trend: number) => {
     if (trend > 0) return <span className="text-green-500 flex items-center"><ChevronUp size={16}/> {trend.toFixed(1)}</span>;

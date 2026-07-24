@@ -6,3 +6,4 @@ numpy
 pydantic
 beautifulsoup4
 requests
+playwright

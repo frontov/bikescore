@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Boolean
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -20,6 +20,7 @@ class Rider(Base):
     races_mtb = Column(Integer, default=0)
 
     last_trend = Column(Float, default=0.0)
+    is_kids = Column(Boolean, default=False)
 
     results = relationship("Result", back_populates="rider")
 

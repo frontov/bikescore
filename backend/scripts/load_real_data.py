@@ -4,37 +4,61 @@ import json
 import re
 import hashlib
 from datetime import datetime, timedelta
+from playwright.sync_api import sync_playwright
 
 def time_to_sec(time_str):
     try:
         parts = time_str.split(':')
         if len(parts) == 3:
-            return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+            return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(float(parts[2].replace(',', '.')))
+        elif len(parts) == 2:
+            return int(parts[0]) * 60 + int(float(parts[1].replace(',', '.')))
     except Exception:
         pass
     return None
 
-def fetch_race_results(url):
+def fetch_race_results(url, page):
     print(f"Scraping race: {url}")
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"  -> Error fetching URL: {e}")
+        page.goto(url, timeout=20000, wait_until="networkidle")
+    except Exception as e:
+        print(f"  -> Error fetching URL with playwright: {e}")
         return []
 
-    soup = BeautifulSoup(response.content, 'html.parser')
+    html = page.content()
+    soup = BeautifulSoup(html, 'html.parser')
     results = []
 
-    # Look for generic table rows
+    # Try to find headers to dynamically assign column indexes
+    name_idx = -1
+    time_idx = -1
+
+    headers = soup.find_all('th')
+    if not headers:
+        # Sometimes headers are in the first row as td
+        first_row = soup.find('tr')
+        if first_row:
+            headers = first_row.find_all(['td', 'th'])
+
+    for i, th in enumerate(headers):
+        text = th.text.lower()
+        if "имя" in text or "name" in text or "участник" in text or "спортсмен" in text:
+            name_idx = i
+        if "время" in text or "time" in text or "результат" in text or "result" in text:
+            time_idx = i
+
+    # Fallback to defaults if headers weren't perfectly found
+    if name_idx == -1: name_idx = 3 # Typical for timingband
+    if time_idx == -1: time_idx = 4
+
     rows = soup.find_all('tr')
     for row in rows:
         cols = row.find_all('td')
-        if len(cols) >= 5:
-            name_col = cols[3].text.strip()
+        if len(cols) > max(name_idx, time_idx):
+            name_col = cols[name_idx].text.strip()
             name = name_col.split('\n')[0].strip()
 
-            time_col = cols[4].text.strip()
+            time_col = cols[time_idx].text.strip()
             time_sec = time_to_sec(time_col)
 
             if name and time_sec:
@@ -46,7 +70,7 @@ def fetch_race_results(url):
                         "rider_id": rider_id,
                         "rider_name": name,
                         "time_sec": time_sec,
-                        "status": "FIN"
+                        "status": "FIN",
                     })
     return results
 
@@ -63,46 +87,70 @@ def scrape_and_load():
     soup = BeautifulSoup(response.content, 'html.parser')
     links = []
 
-    # Find all links on the main page that point to timingband.ru
     for a in soup.find_all('a', href=True):
         href = a['href']
-        if 'timingband.ru/results/' in href:
-            links.append(href)
+
+        # We look for links pointing out to results/timing sites
+        if any(domain in href for domain in ['timingband.ru', 'sportident.online', 'results.zone', 'orgeo.ru', 'vsemsport.ru']):
+            title_div = a.find('div', class_='t993__btn-text-title')
+            title = title_div.text.strip().lower() if title_div else ""
+
+            if "общий зачет" in title or "общий зачёт" in title:
+                continue # Skip overall rankings
+
+            is_kids = "дети" in title or "kids" in title
+
+            links.append((href, is_kids))
 
     # Deduplicate links
-    links = list(set(links))
-    print(f"Found {len(links)} race links to parse.")
+    unique_links = []
+    seen_hrefs = set()
+    for href, is_kids in links:
+        if href not in seen_hrefs:
+            unique_links.append((href, is_kids))
+            seen_hrefs.add(href)
+
+    print(f"Found {len(unique_links)} race links to parse.")
 
     base_date = datetime(2024, 1, 1)
-    for idx, link in enumerate(links):
-        results = fetch_race_results(link)
-        if not results:
-            print(f"  -> No valid results found for {link}")
-            continue
 
-        print(f"  -> Found {len(results)} valid results. Uploading...")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
-        # Determine category based on link text or URL (fallback to mtb)
-        category = "mtb"
-        if "gravel" in link.lower() or "cx" in link.lower():
-            category = "gravel"
-        elif "road" in link.lower() or "crit" in link.lower():
-            category = "road"
+        for idx, (link, is_kids) in enumerate(unique_links):
+            results = fetch_race_results(link, page)
+            if not results:
+                print(f"  -> No valid results found for {link}")
+                continue
 
-        race_date = (base_date + timedelta(days=idx)).strftime("%Y-%m-%d")
+            print(f"  -> Found {len(results)} valid results. Uploading...")
 
-        payload = {
-            "date": race_date,
-            "category": category,
-            "k_factor": 1.0,
-            "results": results
-        }
+            category = "mtb"
+            if "gravel" in link.lower() or "cx" in link.lower():
+                category = "gravel"
+            elif "road" in link.lower() or "crit" in link.lower():
+                category = "road"
 
-        try:
-            api_res = requests.post("http://localhost:8000/api/v1/races", json=payload, timeout=5)
-            print(f"  -> API Response: {api_res.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"  -> Failed to post data to backend: {e}")
+            race_date = (base_date + timedelta(days=idx)).strftime("%Y-%m-%d")
+
+            for res in results:
+                res["is_kids"] = is_kids
+
+            payload = {
+                "date": race_date,
+                "category": category,
+                "k_factor": 1.0,
+                "results": results
+            }
+
+            try:
+                api_res = requests.post("http://localhost:8000/api/v1/races", json=payload, timeout=5)
+                print(f"  -> API Response: {api_res.status_code}")
+            except requests.exceptions.RequestException as e:
+                print(f"  -> Failed to post data to backend: {e}")
+
+        browser.close()
 
 if __name__ == "__main__":
     scrape_and_load()

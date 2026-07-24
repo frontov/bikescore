@@ -26,9 +26,10 @@ export interface LeaderboardResponse {
 
 export const fetchLeaderboard = async (
   disciplines: string,
+  ageGroup: string,
   search?: string
 ): Promise<LeaderboardResponse> => {
-  const params: Record<string, string> = { disciplines };
+  const params: Record<string, string> = { disciplines, age_group: ageGroup };
   if (search) {
     params.search = search;
   }

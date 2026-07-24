@@ -18,6 +18,7 @@ class RaceUploadResult(BaseModel):
     rider_name: str
     time_sec: float
     status: str = "FIN"
+    is_kids: bool = False
 
 class RaceUploadRequest(BaseModel):
     date: str
@@ -29,6 +30,7 @@ class RaceUploadRequest(BaseModel):
 @router.get("/leaderboard", response_model=LeaderboardResponse)
 def get_leaderboard(
     disciplines: str = Query("all", description="comma-separated list of disciplines"),
+    age_group: str = Query("all", description="Age group: all, adults, kids"),
     limit: int = 50,
     search: Optional[str] = None,
     db: Session = Depends(get_db)
@@ -39,6 +41,11 @@ def get_leaderboard(
         selected_disciplines = [d.strip() for d in disciplines.split(",")]
 
     query = db.query(Rider)
+
+    if age_group == "adults":
+        query = query.filter(Rider.is_kids == False)
+    elif age_group == "kids":
+        query = query.filter(Rider.is_kids == True)
 
     if search:
         query = query.filter(Rider.name.ilike(f"%{search}%"))
@@ -107,7 +114,7 @@ def upload_race(race_data: RaceUploadRequest, db: Session = Depends(get_db)):
         # Check if rider exists, if not create
         rider = db.query(Rider).filter(Rider.id == res.rider_id).first()
         if not rider:
-            rider = Rider(id=res.rider_id, name=res.rider_name)
+            rider = Rider(id=res.rider_id, name=res.rider_name, is_kids=res.is_kids)
             db.add(rider)
             db.flush()
 
