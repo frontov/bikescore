@@ -132,3 +132,38 @@ def upload_race(race_data: RaceUploadRequest, db: Session = Depends(get_db)):
     process_race(db, new_race.id)
 
     return {"status": "success", "race_id": new_race.id}
+
+@router.get("/riders/{rider_id}")
+def get_rider_details(rider_id: str, db: Session = Depends(get_db)):
+    rider = db.query(Rider).filter(Rider.id == rider_id).first()
+    if not rider:
+        raise HTTPException(status_code=404, detail="Rider not found")
+
+    results = db.query(Result).filter(Result.rider_id == rider_id).all()
+
+    history = []
+    for res in results:
+        if res.race:
+            history.append({
+                "race_id": res.race.id,
+                "date": res.race.date.isoformat(),
+                "category": res.race.category,
+                "place": res.place,
+                "time_sec": res.time_sec,
+                "delta": res.delta,
+                "status": res.status
+            })
+
+    # Sort history newest first
+    history.sort(key=lambda x: x["date"], reverse=True)
+
+    return {
+        "rider_id": rider.id,
+        "name": rider.name,
+        "ratings": {
+            "road": rider.rating_road,
+            "gravel": rider.rating_gravel,
+            "mtb": rider.rating_mtb
+        },
+        "history": history
+    }

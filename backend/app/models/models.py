@@ -49,5 +49,8 @@ class Result(Base):
     time_sec = Column(Float, nullable=False) # can be null if DNF/DSQ? Requirement says exclude DNF/DSQ. So if they are in DB they might be null or have a status string. Let's add status.
     status = Column(String, default="FIN") # "FIN", "DNF", "DSQ"
 
+    place = Column(Integer, nullable=True)
+    delta = Column(Float, nullable=True)
+
     race = relationship("Race", back_populates="results")
     rider = relationship("Rider", back_populates="results")

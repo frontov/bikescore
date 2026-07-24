@@ -15,8 +15,15 @@ def process_race(session: Session, race_id: int):
     if not valid_results:
         return
 
+    # Sort valid_results by time to assign places
+    valid_results.sort(key=lambda r: r.time_sec)
+
+    # Assign places
+    for idx, r in enumerate(valid_results):
+        r.place = idx + 1
+
     # Find winner time
-    winner_time = min(r.time_sec for r in valid_results)
+    winner_time = valid_results[0].time_sec
 
     # Filter outliers (>30% of winner time)
     # i.e., time_sec <= winner_time * 1.3
@@ -34,6 +41,8 @@ def process_race(session: Session, race_id: int):
     rider_data = {}
     for res in filtered_results:
         rider = res.rider
+        # Initialize delta to 0 in case they get skipped but we still need the record
+        res.delta = 0.0
         if category == 'road':
             old_rating = rider.rating_road
         elif category == 'gravel':
@@ -60,6 +69,11 @@ def process_race(session: Session, race_id: int):
 
         delta_ra = k_factor * (1.0 / (N - 1)) * delta_sum
         deltas[rider_id_A] = delta_ra
+
+    # Save delta back to result model
+    for res in filtered_results:
+        if res.rider_id in deltas:
+            res.delta = deltas[res.rider_id]
 
     # Apply deltas and increment race counts
     for rider_id, delta in deltas.items():

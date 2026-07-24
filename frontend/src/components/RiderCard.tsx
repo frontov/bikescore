@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { X } from 'lucide-react';
-import { type LeaderboardRider } from '../services/apiClient';
+import { X, Trophy, Timer, TrendingUp, TrendingDown } from 'lucide-react';
+import { type LeaderboardRider, fetchRiderDetails, type RiderDetails } from '../services/apiClient';
 
 interface RiderCardProps {
   rider: LeaderboardRider;
@@ -9,6 +9,30 @@ interface RiderCardProps {
 }
 
 const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
+  const [details, setDetails] = useState<RiderDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDetails = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchRiderDetails(rider.rider_id);
+        setDetails(data);
+      } catch (error) {
+        console.error("Failed to load rider details", error);
+      }
+      setLoading(false);
+    };
+    loadDetails();
+  }, [rider.rider_id]);
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   const chartData = [
     { subject: 'Road', A: rider.breakdown.road || 0, fullMark: 2500 },
     { subject: 'Gravel', A: rider.breakdown.gravel || 0, fullMark: 2500 },
@@ -28,7 +52,7 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 space-y-8">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="h-64 bg-gray-900 rounded-lg p-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -68,6 +92,63 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-gray-900 rounded-lg overflow-hidden">
+            <h3 className="text-lg font-semibold p-4 bg-gray-800 border-b border-gray-700">Race History</h3>
+            {loading ? (
+              <div className="p-8 text-center text-gray-400">Loading history...</div>
+            ) : !details?.history.length ? (
+              <div className="p-8 text-center text-gray-400">No race history found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-gray-400 uppercase bg-gray-800/50">
+                    <tr>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Category</th>
+                      <th className="px-4 py-3">Place</th>
+                      <th className="px-4 py-3">Time</th>
+                      <th className="px-4 py-3">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {details.history.map((race, idx) => (
+                      <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-4 py-3 font-mono text-gray-300">{race.date}</td>
+                        <td className="px-4 py-3">
+                          <span className="bg-gray-700 px-2 py-1 rounded text-xs uppercase tracking-wider">{race.category}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {race.place ? (
+                            <span className="flex items-center gap-1 font-bold text-white">
+                              {race.place <= 3 && <Trophy size={14} className={race.place === 1 ? "text-yellow-400" : race.place === 2 ? "text-gray-300" : "text-amber-600"} />}
+                              {race.place}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">{race.status}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-gray-300 flex items-center gap-1">
+                          <Timer size={14} className="text-gray-500" />
+                          {formatTime(race.time_sec)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {race.delta !== null && race.delta !== 0 ? (
+                            <span className={`flex items-center gap-1 font-mono ${race.delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {race.delta > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                              {Math.abs(race.delta).toFixed(1)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
