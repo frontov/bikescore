@@ -42,25 +42,25 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 md:p-6 z-50 overflow-hidden">
       <div className="bg-gray-800 border border-gray-700/50 text-gray-100 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col">
+        {/* Header */}
         <div className="flex justify-between items-center p-5 md:p-6 border-b border-gray-700/50 bg-gray-900/30 shrink-0">
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">{rider.name}</h2>
             <p className="text-blue-400 font-medium mt-1">Рейтинг: {rider.composite_rating.toFixed(1)}</p>
           </div>
-          <button onClick={onClose} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors self-start border border-gray-700">
+          <button 
+            onClick={onClose} 
+            className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors self-start border border-gray-700"
+          >
             <X size={24} />
           </button>
         </div>
 
-<<<<<<< HEAD
+        {/* Content Container */}
         <div className="p-5 md:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+          {/* Radar & Breakdown Grid */}
           <div className="grid md:grid-cols-2 gap-6 md:gap-8">
             <div className="h-64 md:h-80 bg-gray-900/50 rounded-xl p-2 md:p-4 border border-gray-800">
-=======
-        <div className="p-6 space-y-8">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="h-64 bg-gray-900 rounded-lg p-4">
->>>>>>> dce15ba4e4eb58704afa04e9051a2639feef3002
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
                   <PolarGrid stroke="#374151" />
@@ -100,7 +100,7 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
             </div>
           </div>
 
-<<<<<<< HEAD
+          {/* Race History Table */}
           <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-700/50 shadow-inner">
             <h3 className="text-lg font-bold p-5 bg-gray-800/80 border-b border-gray-700/50">История заездов</h3>
             {loading ? (
@@ -159,55 +159,6 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
                             </span>
                           ) : (
                             <span className="text-gray-600 font-mono">0.0</span>
-=======
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <h3 className="text-lg font-semibold p-4 bg-gray-800 border-b border-gray-700">Race History</h3>
-            {loading ? (
-              <div className="p-8 text-center text-gray-400">Loading history...</div>
-            ) : !details?.history.length ? (
-              <div className="p-8 text-center text-gray-400">No race history found.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-400 uppercase bg-gray-800/50">
-                    <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Place</th>
-                      <th className="px-4 py-3">Time</th>
-                      <th className="px-4 py-3">Delta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {details.history.map((race, idx) => (
-                      <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-4 py-3 font-mono text-gray-300">{race.date}</td>
-                        <td className="px-4 py-3">
-                          <span className="bg-gray-700 px-2 py-1 rounded text-xs uppercase tracking-wider">{race.category}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {race.place ? (
-                            <span className="flex items-center gap-1 font-bold text-white">
-                              {race.place <= 3 && <Trophy size={14} className={race.place === 1 ? "text-yellow-400" : race.place === 2 ? "text-gray-300" : "text-amber-600"} />}
-                              {race.place}
-                            </span>
-                          ) : (
-                            <span className="text-gray-500">{race.status}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 font-mono text-gray-300 flex items-center gap-1">
-                          <Timer size={14} className="text-gray-500" />
-                          {formatTime(race.time_sec)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {race.delta !== null && race.delta !== 0 ? (
-                            <span className={`flex items-center gap-1 font-mono ${race.delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {race.delta > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                              {Math.abs(race.delta).toFixed(1)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-500">-</span>
->>>>>>> dce15ba4e4eb58704afa04e9051a2639feef3002
                           )}
                         </td>
                       </tr>
