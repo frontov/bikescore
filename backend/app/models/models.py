@@ -21,6 +21,7 @@ class Rider(Base):
 
     last_trend = Column(Float, default=0.0)
     is_kids = Column(Boolean, default=False)
+    gender = Column(String, default="M") # "M" or "F"
 
     results = relationship("Result", back_populates="rider")
 

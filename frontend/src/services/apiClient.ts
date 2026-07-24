@@ -48,9 +48,10 @@ export interface LeaderboardResponse {
 export const fetchLeaderboard = async (
   disciplines: string,
   ageGroup: string,
+  gender: string,
   search?: string
 ): Promise<LeaderboardResponse> => {
-  const params: Record<string, string> = { disciplines, age_group: ageGroup };
+  const params: Record<string, string> = { disciplines, age_group: ageGroup, gender };
   if (search) {
     params.search = search;
   }
