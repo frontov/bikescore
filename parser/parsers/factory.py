@@ -2,6 +2,7 @@ from typing import Type
 from parser.parsers.base import BaseParser
 from parser.parsers.timingband import TimingbandParser
 from parser.parsers.sportident import SportidentParser
+from parser.parsers.resultszone import ResultsZoneParser
 from parser.parsers.generic import GenericParser
 
 def get_parser(url: str) -> BaseParser:
@@ -10,6 +11,7 @@ def get_parser(url: str) -> BaseParser:
     parsers: list[Type[BaseParser]] = [
         TimingbandParser,
         SportidentParser,
+        ResultsZoneParser,
         GenericParser
     ]
 
