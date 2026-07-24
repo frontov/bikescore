@@ -40,26 +40,26 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 text-gray-100 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 md:p-6 z-50 overflow-hidden">
+      <div className="bg-gray-800 border border-gray-700/50 text-gray-100 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col">
+        <div className="flex justify-between items-center p-5 md:p-6 border-b border-gray-700/50 bg-gray-900/30 shrink-0">
           <div>
-            <h2 className="text-2xl font-bold">{rider.name}</h2>
-            <p className="text-gray-400">Composite Rating: {rider.composite_rating.toFixed(1)}</p>
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">{rider.name}</h2>
+            <p className="text-blue-400 font-medium mt-1">Рейтинг: {rider.composite_rating.toFixed(1)}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-700 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors self-start border border-gray-700">
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-6 space-y-8">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="h-64 bg-gray-900 rounded-lg p-4">
+        <div className="p-5 md:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+            <div className="h-64 md:h-80 bg-gray-900/50 rounded-xl p-2 md:p-4 border border-gray-800">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                  <PolarGrid stroke="#4B5563" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#9CA3AF' }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 'dataMax + 500']} stroke="#4B5563" tick={{ fill: '#9CA3AF' }} />
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 'dataMax + 500']} stroke="#374151" tick={{ fill: '#6B7280', fontSize: 10 }} />
                   <Radar
                     name="Rating"
                     dataKey="A"
@@ -71,76 +71,87 @@ const RiderCard: React.FC<RiderCardProps> = ({ rider, onClose }) => {
               </ResponsiveContainer>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b border-gray-700 pb-2">Stats Breakdown</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between p-2 bg-gray-700 rounded">
-                  <span>Road Rating</span>
-                  <span className="font-mono">{rider.breakdown.road ? rider.breakdown.road.toFixed(1) : 'N/A'}</span>
+            <div className="space-y-5 flex flex-col justify-center">
+              <h3 className="text-xl font-bold border-b border-gray-700/50 pb-3 text-gray-200">Детализация рейтинга</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3.5 bg-gray-800/80 rounded-xl border border-gray-700/50">
+                  <span className="font-medium text-gray-300">Шоссе (Road)</span>
+                  <span className="font-mono text-lg text-blue-400 font-bold">{rider.breakdown.road ? rider.breakdown.road.toFixed(1) : 'N/A'}</span>
                 </div>
-                <div className="flex justify-between p-2 bg-gray-700 rounded">
-                  <span>Gravel Rating</span>
-                  <span className="font-mono">{rider.breakdown.gravel ? rider.breakdown.gravel.toFixed(1) : 'N/A'}</span>
+                <div className="flex justify-between items-center p-3.5 bg-gray-800/80 rounded-xl border border-gray-700/50">
+                  <span className="font-medium text-gray-300">Грэвел (Gravel)</span>
+                  <span className="font-mono text-lg text-amber-500 font-bold">{rider.breakdown.gravel ? rider.breakdown.gravel.toFixed(1) : 'N/A'}</span>
                 </div>
-                <div className="flex justify-between p-2 bg-gray-700 rounded">
-                  <span>MTB Rating</span>
-                  <span className="font-mono">{rider.breakdown.mtb ? rider.breakdown.mtb.toFixed(1) : 'N/A'}</span>
+                <div className="flex justify-between items-center p-3.5 bg-gray-800/80 rounded-xl border border-gray-700/50">
+                  <span className="font-medium text-gray-300">МТБ (MTB)</span>
+                  <span className="font-mono text-lg text-emerald-500 font-bold">{rider.breakdown.mtb ? rider.breakdown.mtb.toFixed(1) : 'N/A'}</span>
                 </div>
-                <div className="flex justify-between p-2 bg-gray-700 rounded mt-4">
-                  <span>Total Races</span>
-                  <span className="font-mono">{rider.total_races}</span>
+                <div className="flex justify-between items-center p-3.5 bg-gray-900/80 rounded-xl border border-gray-700 mt-6 shadow-inner">
+                  <span className="font-bold text-gray-300 uppercase text-xs tracking-wider">Всего гонок учтено</span>
+                  <span className="font-mono text-xl font-bold">{rider.total_races}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <h3 className="text-lg font-semibold p-4 bg-gray-800 border-b border-gray-700">Race History</h3>
+          <div className="bg-gray-900/50 rounded-xl overflow-hidden border border-gray-700/50 shadow-inner">
+            <h3 className="text-lg font-bold p-5 bg-gray-800/80 border-b border-gray-700/50">История заездов</h3>
             {loading ? (
-              <div className="p-8 text-center text-gray-400">Loading history...</div>
+              <div className="p-12 text-center text-gray-500 flex flex-col items-center gap-3">
+                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                Загрузка истории...
+              </div>
             ) : !details?.history.length ? (
-              <div className="p-8 text-center text-gray-400">No race history found.</div>
+              <div className="p-12 text-center text-gray-500 font-medium">История гонок пуста.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-400 uppercase bg-gray-800/50">
+              <div className="overflow-x-auto custom-scrollbar pb-2">
+                <table className="w-full text-left border-collapse whitespace-nowrap">
+                  <thead className="text-xs text-gray-400 uppercase bg-gray-900/80 font-bold tracking-wider">
                     <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Place</th>
-                      <th className="px-4 py-3">Time</th>
-                      <th className="px-4 py-3">Delta</th>
+                      <th className="px-5 py-4">Дата</th>
+                      <th className="px-5 py-4">Дисциплина</th>
+                      <th className="px-5 py-4 text-center">Место</th>
+                      <th className="px-5 py-4 text-right">Время</th>
+                      <th className="px-5 py-4 text-right">Очки</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-800/80">
                     {details.history.map((race, idx) => (
-                      <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-4 py-3 font-mono text-gray-300">{race.date}</td>
-                        <td className="px-4 py-3">
-                          <span className="bg-gray-700 px-2 py-1 rounded text-xs uppercase tracking-wider">{race.category}</span>
+                      <tr key={idx} className="hover:bg-gray-800/50 transition-colors">
+                        <td className="px-5 py-4 font-mono text-sm text-gray-300">{race.date}</td>
+                        <td className="px-5 py-4">
+                          <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                            race.category === 'mtb' ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-800/50' :
+                            race.category === 'gravel' ? 'bg-amber-900/50 text-amber-400 border border-amber-800/50' :
+                            'bg-blue-900/50 text-blue-400 border border-blue-800/50'
+                          }`}>
+                            {race.category}
+                          </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-5 py-4 text-center">
                           {race.place ? (
-                            <span className="flex items-center gap-1 font-bold text-white">
-                              {race.place <= 3 && <Trophy size={14} className={race.place === 1 ? "text-yellow-400" : race.place === 2 ? "text-gray-300" : "text-amber-600"} />}
-                              {race.place}
+                            <span className="inline-flex items-center justify-center gap-1.5 font-bold text-base w-full">
+                              {race.place <= 3 && <Trophy size={16} className={race.place === 1 ? "text-yellow-400" : race.place === 2 ? "text-gray-300" : "text-amber-600"} />}
+                              <span className={race.place <= 3 ? "text-white" : "text-gray-400"}>{race.place}</span>
                             </span>
                           ) : (
-                            <span className="text-gray-500">{race.status}</span>
+                            <span className="text-gray-500 font-medium">{race.status}</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 font-mono text-gray-300 flex items-center gap-1">
-                          <Timer size={14} className="text-gray-500" />
-                          {formatTime(race.time_sec)}
+                        <td className="px-5 py-4 font-mono text-sm text-gray-300 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Timer size={14} className="text-gray-500" />
+                            {formatTime(race.time_sec)}
+                          </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-5 py-4 text-right">
                           {race.delta !== null && race.delta !== 0 ? (
-                            <span className={`flex items-center gap-1 font-mono ${race.delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {race.delta > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                              {Math.abs(race.delta).toFixed(1)}
+                            <span className={`inline-flex items-center gap-1.5 font-mono font-bold ${race.delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {race.delta > 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                              {race.delta > 0 ? '+' : ''}{race.delta.toFixed(1)}
                             </span>
                           ) : (
-                            <span className="text-gray-500">-</span>
+                            <span className="text-gray-600 font-mono">0.0</span>
                           )}
                         </td>
                       </tr>

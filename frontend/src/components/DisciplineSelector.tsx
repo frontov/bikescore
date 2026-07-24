@@ -23,19 +23,19 @@ const DisciplineSelector: React.FC<DisciplineSelectorProps> = ({ selectedDiscipl
   ];
 
   return (
-    <div className="flex gap-4 p-4 bg-gray-800 rounded-lg shadow-md mb-6 w-full max-w-4xl mx-auto items-center">
-      <span className="font-semibold text-gray-200">Filters:</span>
-      <div className="flex gap-2">
+    <div className="flex flex-col gap-3 p-5 bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-xl w-full">
+      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Дисциплины (Множественный выбор)</span>
+      <div className="flex flex-wrap gap-2 h-full">
         {disciplines.map(({ id, label }) => {
           const isSelected = selectedDisciplines.includes(id);
           return (
             <button
               key={id}
               onClick={() => toggleDiscipline(id)}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+              className={`flex-1 min-w-[100px] px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 border-2 ${
                 isSelected
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-transparent border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                  : 'bg-gray-700/30 border-transparent text-gray-400 hover:border-gray-600 hover:text-gray-200'
               }`}
             >
               {label}
