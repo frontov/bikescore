@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Boolean, DateTime
 from sqlalchemy.orm import declarative_base, relationship
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -22,6 +23,8 @@ class Rider(Base):
     last_trend = Column(Float, default=0.0)
     is_kids = Column(Boolean, default=False)
     gender = Column(String, default="M") # "M" or "F"
+    city = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     results = relationship("Result", back_populates="rider")
 
@@ -34,9 +37,18 @@ class Race(Base):
     __tablename__ = "races"
 
     id = Column(Integer, primary_key=True, index=True)
-    date = Column(Date, nullable=False)
-    category = Column(String, nullable=False) # 'road', 'gravel', 'mtb'
+    date = Column(Date, nullable=True)
+    category = Column(String, nullable=True) # 'road', 'gravel', 'mtb'
     k_factor = Column(Float, default=1.0)
+    external_id = Column(Integer, nullable=True, unique=True)
+    event_name = Column(String, nullable=True)
+    title = Column(String, nullable=True)
+    discipline = Column(String, nullable=True)
+    gender_group = Column(String, nullable=True)
+    age_group = Column(String, nullable=True)
+    is_rating_eligible = Column(Boolean, default=True)
+    source_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     results = relationship("Result", back_populates="race")
 
@@ -52,6 +64,8 @@ class Result(Base):
 
     place = Column(Integer, nullable=True)
     delta = Column(Float, nullable=True)
+    bib = Column(String, nullable=True)
+    time_str = Column(String, nullable=True)
 
     race = relationship("Race", back_populates="results")
     rider = relationship("Rider", back_populates="results")

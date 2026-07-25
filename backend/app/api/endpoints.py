@@ -20,11 +20,22 @@ class RaceUploadResult(BaseModel):
     status: str = "FIN"
     is_kids: bool = False
     gender: str = "M"
+    city: Optional[str] = None
+    bib: Optional[str] = None
+    time_str: Optional[str] = None
 
 class RaceUploadRequest(BaseModel):
-    date: str
-    category: str
+    date: Optional[str] = None
+    category: Optional[str] = None
     k_factor: float = 1.0
+    external_id: Optional[int] = None
+    event_name: Optional[str] = None
+    title: Optional[str] = None
+    discipline: Optional[str] = None
+    gender_group: Optional[str] = None
+    age_group: Optional[str] = None
+    is_rating_eligible: Optional[bool] = True
+    source_url: Optional[str] = None
     results: List[RaceUploadResult]
 
 
@@ -105,11 +116,24 @@ def get_leaderboard(
 def upload_race(race_data: RaceUploadRequest, db: Session = Depends(get_db)):
     from datetime import datetime
 
+    # Parse date if available
+    race_date = None
+    if race_data.date:
+        race_date = datetime.strptime(race_data.date, "%Y-%m-%d").date()
+
     # Create Race
     new_race = Race(
-        date=datetime.strptime(race_data.date, "%Y-%m-%d").date(),
+        date=race_date,
         category=race_data.category,
-        k_factor=race_data.k_factor
+        k_factor=race_data.k_factor,
+        external_id=race_data.external_id,
+        event_name=race_data.event_name,
+        title=race_data.title,
+        discipline=race_data.discipline,
+        gender_group=race_data.gender_group,
+        age_group=race_data.age_group,
+        is_rating_eligible=race_data.is_rating_eligible,
+        source_url=race_data.source_url
     )
     db.add(new_race)
     db.flush() # To get new_race.id
@@ -118,15 +142,27 @@ def upload_race(race_data: RaceUploadRequest, db: Session = Depends(get_db)):
         # Check if rider exists, if not create
         rider = db.query(Rider).filter(Rider.id == res.rider_id).first()
         if not rider:
-            rider = Rider(id=res.rider_id, name=res.rider_name, is_kids=res.is_kids, gender=res.gender)
+            rider = Rider(
+                id=res.rider_id,
+                name=res.rider_name,
+                is_kids=res.is_kids,
+                gender=res.gender,
+                city=res.city
+            )
             db.add(rider)
             db.flush()
+        else:
+            # Update city if it's provided and wasn't before
+            if res.city and not rider.city:
+                rider.city = res.city
 
         new_result = Result(
             race_id=new_race.id,
             rider_id=rider.id,
             time_sec=res.time_sec,
-            status=res.status
+            status=res.status,
+            bib=res.bib,
+            time_str=res.time_str
         )
         db.add(new_result)
 
