@@ -4,6 +4,7 @@ import sqlite3
 import asyncio
 import json
 import re
+import hashlib
 from urllib.parse import urlparse
 from playwright.async_api import async_playwright
 
@@ -18,24 +19,37 @@ def init_db():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS riders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            gender TEXT,
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            rating_road REAL DEFAULT 1000.0,
+            rating_gravel REAL DEFAULT 1000.0,
+            rating_mtb REAL DEFAULT 1000.0,
+            races_road INTEGER DEFAULT 0,
+            races_gravel INTEGER DEFAULT 0,
+            races_mtb INTEGER DEFAULT 0,
+            last_trend REAL DEFAULT 0.0,
+            is_kids BOOLEAN DEFAULT 0,
+            gender TEXT DEFAULT 'M',
             city TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Add index if it doesn't exist
+    cursor.execute("CREATE INDEX IF NOT EXISTS ix_riders_id ON riders (id)")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS races (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date DATE,
+            category TEXT,
+            k_factor REAL DEFAULT 1.0,
             external_id INTEGER UNIQUE,
-            event_name TEXT NOT NULL,
-            title TEXT NOT NULL,
+            event_name TEXT,
+            title TEXT,
             discipline TEXT,
             gender_group TEXT,
             age_group TEXT,
-            is_rating_eligible INTEGER DEFAULT 1,
+            is_rating_eligible BOOLEAN DEFAULT 1,
             source_url TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -45,16 +59,20 @@ def init_db():
         CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             race_id INTEGER NOT NULL,
-            rider_id INTEGER NOT NULL,
+            rider_id TEXT NOT NULL,
+            time_sec REAL NOT NULL,
+            status TEXT DEFAULT 'FIN',
             place INTEGER,
+            delta REAL,
             bib TEXT,
             time_str TEXT,
-            time_sec INTEGER,
             FOREIGN KEY (race_id) REFERENCES races (id) ON DELETE CASCADE,
             FOREIGN KEY (rider_id) REFERENCES riders (id) ON DELETE CASCADE,
             UNIQUE(race_id, rider_id)
         )
     """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS ix_results_race_id ON results (race_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS ix_results_rider_id ON results (rider_id)")
 
     conn.commit()
     conn.close()
@@ -151,15 +169,22 @@ def parse_item_to_dict(item):
     }
 
 
-def get_or_create_rider(cursor, name: str, gender: str = None, city: str = None) -> int:
+def get_or_create_rider(cursor, name: str, gender: str = None, city: str = None) -> str:
     clean_name = name.strip()
-    cursor.execute("SELECT id FROM riders WHERE name = ?", (clean_name,))
+    # Try finding an existing rider by name (or we could rely strictly on the hash)
+    # The requirement seems to point to hash-based id generation for unique consistency.
+    rider_id = "r_" + hashlib.md5(clean_name.encode('utf-8')).hexdigest()[:8]
+
+    cursor.execute("SELECT id FROM riders WHERE id = ?", (rider_id,))
     row = cursor.fetchone()
     if row:
+        # If city wasn't filled but is available now, we could update it
+        if city:
+            cursor.execute("UPDATE riders SET city = ? WHERE id = ? AND (city IS NULL OR city = '')", (city, rider_id))
         return row[0]
 
-    cursor.execute("INSERT INTO riders (name, gender, city) VALUES (?, ?, ?)", (clean_name, gender, city))
-    return cursor.lastrowid
+    cursor.execute("INSERT INTO riders (id, name, gender, city) VALUES (?, ?, ?, ?)", (rider_id, clean_name, gender, city))
+    return rider_id
 
 
 def save_event_to_db(race_id_ext, event_name, race_title, source_url, participants):
